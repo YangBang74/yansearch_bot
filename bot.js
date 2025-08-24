@@ -1,32 +1,43 @@
 import TelegramBot from 'node-telegram-bot-api'
 import axios from 'axios'
 import 'dotenv/config'
+import express from 'express'
 
 const TOKEN = process.env.API_TOKEN
 const bot = new TelegramBot(TOKEN, { polling: true })
 
 console.log('Бот запущен и готов к работе!')
 
-// Обработчик сообщений
+// === Фейковый веб-сервер для Render/Railway ===
+const app = express()
+const PORT = process.env.PORT || 3000
+
+app.get('/', (req, res) => {
+  res.send('Telegram бот работает!')
+})
+
+app.listen(PORT, () => {
+  console.log(`Web service запущен на порту ${PORT}`)
+})
+
+// === Inline-поиск ===
 bot.on('inline_query', async (inlineQuery) => {
   const query = inlineQuery.query.trim()
   if (!query) return
 
   try {
-    // Поиск в Википедии (русская)
     const url = `https://ru.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`
     const res = await axios.get(url)
     const data = res.data
 
     if (!data.extract) return
 
-    // Берём первые 2 абзаца
     const snippet = data.extract.split('\n').slice(0, 2).join('\n\n')
 
     const results = [
       {
         type: 'article',
-        id: data.pageid.toString(),
+        id: Date.now().toString(), // уникальный ID
         title: data.title,
         input_message_content: {
           message_text: snippet,
