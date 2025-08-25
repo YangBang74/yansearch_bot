@@ -4,23 +4,16 @@ import 'dotenv/config'
 import express from 'express'
 
 const TOKEN = process.env.API_TOKEN
+if (!TOKEN) {
+  console.error("❌ Нет API_TOKEN, добавь в переменные окружения!")
+  process.exit(1)
+}
+
+// Запускаем Telegram-бота
 const bot = new TelegramBot(TOKEN, { polling: true })
+console.log('🤖 Бот запущен и готов к работе!')
 
-console.log('Бот запущен и готов к работе!')
-
-// === Фейковый веб-сервер для Render/Railway ===
-const app = express()
-const PORT = process.env.PORT || 3000
-
-app.get('/', (req, res) => {
-  res.send('Telegram бот работает!')
-})
-
-app.listen(PORT, () => {
-  console.log(`Web service запущен на порту ${PORT}`)
-})
-
-// === Inline-поиск ===
+// Inline-поиск по Википедии
 bot.on('inline_query', async (inlineQuery) => {
   const query = inlineQuery.query.trim()
   if (!query) return
@@ -37,17 +30,31 @@ bot.on('inline_query', async (inlineQuery) => {
     const results = [
       {
         type: 'article',
-        id: Date.now().toString(), // уникальный ID
+        id: String(Date.now()),
         title: data.title,
-        input_message_content: {
-          message_text: snippet,
-        },
+        input_message_content: { message_text: snippet },
         description: snippet.slice(0, 100) + '...',
       },
     ]
 
     bot.answerInlineQuery(inlineQuery.id, results, { cache_time: 0 })
   } catch (err) {
-    console.error(err.message)
+    console.error("Ошибка запроса:", err.message)
   }
 })
+
+// Express-сервер (Render требует порт!)
+const app = express()
+const PORT = process.env.PORT || 3000
+
+app.get('/', (req, res) => {
+  res.send('✅ Telegram бот работает на Render!')
+})
+
+app.listen(PORT, () => {
+  console.log(`🌐 Web service запущен на порту ${PORT}`)
+})
+
+setInterval(() => {
+  console.log('⏰ Сервер работает, всё ок!')
+}, 10_000)
