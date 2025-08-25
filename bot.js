@@ -55,6 +55,11 @@ app.listen(PORT, () => {
   console.log(`🌐 Web service запущен на порту ${PORT}`)
 })
 
-setInterval(() => {
-  console.log('⏰ Сервер работает, всё ок!')
-}, 10_000)
+setInterval(async () => {
+  try {
+    await axios.get("https://yansearch-bot.onrender.com/")
+    console.log("⏰ Сервер работает, пинг успешен!")
+  } catch (err) {
+    console.error("⚠️ Ошибка пинга:", err.message)
+  }
+}, 600_000) 
